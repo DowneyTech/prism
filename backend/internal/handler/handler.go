@@ -15,6 +15,11 @@ func Register(e *echo.Echo, pool *pgxpool.Pool, cfg *config.Config) {
 	userRepo := repository.NewUserRepository(pool)
 	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret)
 
+	wsRepo := repository.NewWorkspaceRepository(pool)
+	memberRepo := repository.NewWorkspaceMemberRepository(pool)
+	invRepo := repository.NewInvitationRepository(pool)
+	wsSvc := service.NewWorkspaceService(pool, wsRepo, memberRepo, invRepo, userRepo, cfg.FrontendURL)
+
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
@@ -27,6 +32,15 @@ func Register(e *echo.Echo, pool *pgxpool.Pool, cfg *config.Config) {
 	a.POST("/logout", auth.logout)
 
 	// Protected routes — JWT required
-	// All subsequent feature handlers are registered on this group.
-	_ = e.Group("/api", appmiddleware.JWT(authSvc))
+	p := e.Group("/api", appmiddleware.JWT(authSvc))
+
+	ws := &workspaceHandler{ws: wsSvc}
+	p.POST("/workspaces", ws.create)
+	p.GET("/workspaces/:slug", ws.get)
+	p.PUT("/workspaces/:slug", ws.update)
+	p.GET("/workspaces/:slug/members", ws.listMembers)
+	p.PUT("/workspaces/:slug/members/:id", ws.updateMemberRole)
+	p.DELETE("/workspaces/:slug/members/:id", ws.removeMember)
+	p.POST("/workspaces/:slug/invite", ws.invite)
+	p.POST("/invitations/:token/accept", ws.acceptInvite)
 }

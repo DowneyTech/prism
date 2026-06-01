@@ -59,6 +59,20 @@ func (r *UserRepository) FindByEmailWithHash(ctx context.Context, email string) 
 	return &u, hash, nil
 }
 
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	var u model.User
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, email, name, avatar_url, created_at FROM users WHERE email = $1`, email,
+	).Scan(&u.ID, &u.Email, &u.Name, &u.AvatarURL, &u.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("find user by email: %w", err)
+	}
+	return &u, nil
+}
+
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
 	var u model.User
 	err := r.pool.QueryRow(ctx,
