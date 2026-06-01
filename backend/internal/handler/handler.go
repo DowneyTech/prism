@@ -20,6 +20,9 @@ func Register(e *echo.Echo, pool *pgxpool.Pool, cfg *config.Config) {
 	invRepo := repository.NewInvitationRepository(pool)
 	wsSvc := service.NewWorkspaceService(pool, wsRepo, memberRepo, invRepo, userRepo, cfg.FrontendURL)
 
+	reportRepo := repository.NewReportRepository(pool)
+	reportSvc := service.NewReportService(wsRepo, memberRepo, reportRepo)
+
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
@@ -43,4 +46,10 @@ func Register(e *echo.Echo, pool *pgxpool.Pool, cfg *config.Config) {
 	p.DELETE("/workspaces/:slug/members/:id", ws.removeMember)
 	p.POST("/workspaces/:slug/invite", ws.invite)
 	p.POST("/invitations/:token/accept", ws.acceptInvite)
+
+	rpt := &reportHandler{svc: reportSvc}
+	p.POST("/workspaces/:slug/reports", rpt.submit)
+	p.GET("/workspaces/:slug/reports", rpt.getTeamReports)
+	p.GET("/workspaces/:slug/reports/me", rpt.getMyReports)
+	p.GET("/workspaces/:slug/reports/:week", rpt.getWeekReport)
 }
