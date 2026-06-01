@@ -12,6 +12,9 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if cfg.JWTSecret == "change-me-in-production" || cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET must be set to a strong random value before starting")
+	}
 
 	pool, err := db.Connect(cfg.DatabaseURL)
 	if err != nil {
@@ -22,6 +25,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.BodyLimit("1M"))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{cfg.FrontendURL},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAuthorization},
