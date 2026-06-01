@@ -1,0 +1,8 @@
+[build]
+  cmd = "go build -o ./tmp/server ./cmd/server"
+  bin = "./tmp/server"
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "migrations"]
+
+[log]
+  time = false

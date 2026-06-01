@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS todoist_tasks;
+DROP TABLE IF EXISTS todoist_integrations;
+DROP TABLE IF EXISTS workspace_ai_settings;
+DROP TABLE IF EXISTS report_summaries;
+DROP TABLE IF EXISTS weekly_reports;
+DROP TABLE IF EXISTS invitations;
+DROP TABLE IF EXISTS workspace_members;
+DROP TABLE IF EXISTS workspaces;
+DROP TABLE IF EXISTS users;

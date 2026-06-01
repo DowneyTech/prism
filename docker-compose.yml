@@ -9,15 +9,32 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prism"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./backend/migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://prism:prism@db:5432/prism?sslmode=disable", "up"]
+    depends_on:
+      db:
+        condition: service_healthy
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://prism:prism@db:5432/prism?sslmode=disable
+    env_file:
+      - .env
     depends_on:
-      - db
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./backend:/app
 
@@ -25,8 +42,8 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
+    env_file:
+      - .env
     depends_on:
       - backend
     volumes:
